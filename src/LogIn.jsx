@@ -18,6 +18,7 @@ import {
   setDoc,
   query,
   where,
+  getDocs,
 } from "firebase/firestore";
 
 export default function (props) {
@@ -25,6 +26,7 @@ export default function (props) {
   const [account, setAccount] = useState(null);
   const [exist, setExist] = useState(false);
   const [user, setUser] = useState(null);
+  
 
   const firebaseConfig = {
     apiKey: "AIzaSyBtdpW3nwEsn3YtHsXPqHWRqbbXtIxopw4",
@@ -49,27 +51,38 @@ export default function (props) {
       setProvider(tempProvider);
       console.log(provider);
       setAccount(accounts[0]);
-      await getUser(db, accounts[0]);
+      await getUser(accounts[0]);
     } else {
       console.log("install metamask");
     }
   };
-  async function Register(db, name) {
-    if (searchUser(name)) {
+  async function Register() {
+    console.log("HOla")
+    let exist= await searchUser();
+    console.log(exist.toString())
+    if (exist && user !=null) {
       await setDoc(doc(db, "Users", account.toString().toUpperCase()), {
-        Name: name,
+        Name: user,
       });
+      setExist(true);
     }
   }
-  async function searchUser(userName) {
-    const q = query(db, where("Name", "==", userName));
-    if (q.exist()) {
-      return false;
-    } else {
+  async function searchUser() {
+    const UsersData = collection(db, "Users");
+    console.log("HOla1")
+    const q = query(UsersData, where("Name", "==", user));
+    console.log("HOla2")
+    const querySnapshot = await getDocs(q);
+    console.log("HOla3")
+    if (querySnapshot.empty) {
+      console.log("Noexiste");
       return true;
+    } else {
+      console.log(" existe");
+      return false;
     }
   }
-  async function getUser(db, account) {
+  async function getUser(account) {
     console.log("Account:" + account.toUpperCase());
     console.log("Necesario:" + "0x8B66676696E61EE8748e30AA5a07D18BaD0810D8");
     const docRef = doc(db, "Users", account.toString().toUpperCase());
@@ -147,11 +160,14 @@ export default function (props) {
                 </Typography>
               </Grid>
               <TextField
-                id="outlined-basic"
-                label="Outlined"
+                id="outlined"
+                label="UserName"
                 variant="outlined"
+                onChange={(e) => {
+                  setUser(e.target.value);
+                }}
               />
-              <Button>
+              <Button onClick={Register}>
                 <Typography>Register</Typography>
               </Button>
             </Grid>
