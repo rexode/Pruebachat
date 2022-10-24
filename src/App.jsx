@@ -1,7 +1,7 @@
 import "./App.css";
 import React, { useRef} from "react";
 import { Typography, TextField, Button,Box,Grid } from "@mui/material";
-import LogIn from "./LogIn";
+import LogIn from "./Components/LogIn";
 import { useEffect, useState } from "react";
 
 
