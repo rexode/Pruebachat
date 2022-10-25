@@ -33,9 +33,8 @@ export default class DatabaseConnection{
       user:null
      }
    }
-}
 
-   const initConnection = async () => {
+  initConnection = async () => {
     if (typeof window.ethereum !== "undefined") {
       console.log("good");
       const accounts = await window.ethereum.request({
@@ -50,7 +49,7 @@ export default class DatabaseConnection{
       console.log("install metamask");
     }
   };
-    Register(){
+    async Register(){
     console.log("HOla")
     let exist= await searchUser();
     console.log(exist.toString())
@@ -61,7 +60,7 @@ export default class DatabaseConnection{
       this.state.exist=true;
     }
   }
-   async function searchUser() {
+   async  searchUser() {
     const UsersData = collection(db, "Users");
     console.log("HOla1")
     const q = query(UsersData, where("Name", "==", user));
@@ -76,7 +75,7 @@ export default class DatabaseConnection{
       return false;
     }
   }
-  async function getUser(account) {
+  async  getUser(account) {
     console.log("Account:" + account.toUpperCase());
     console.log("Necesario:" + "0x8B66676696E61EE8748e30AA5a07D18BaD0810D8");
     const docRef = doc(db, "Users", account.toString().toUpperCase());
@@ -91,3 +90,4 @@ export default class DatabaseConnection{
       console.log("No such document!");
     }
   }
+}
