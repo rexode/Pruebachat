@@ -7,11 +7,9 @@ import {
   Grid,
   FormGroup,
 } from "@mui/material";
-import { DatabaseConnection } from "../Controller/Database";
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithCustomToken } from "firebase/auth";
 import {
   collection,
   doc,
@@ -21,17 +19,16 @@ import {
   query,
   where,
   getDocs,
+  updateDoc 
 } from "firebase/firestore";
-import {Link} from "react-router-dom";
-import { recoverPersonalSignature } from '@metamask/eth-sig-util';
-
+import { recoverPersonalSignature } from "@metamask/eth-sig-util";
 
 export default function (props) {
   const [provider, setProvider] = useState(null);
   const [account, setAccount] = useState(null);
   const [exist, setExist] = useState(false);
   const [user, setUser] = useState(null);
-
+  const [logged, setLogged] = useState(false);
 
   const firebaseConfig = {
     apiKey: "AIzaSyBtdpW3nwEsn3YtHsXPqHWRqbbXtIxopw4",
@@ -44,60 +41,65 @@ export default function (props) {
   };
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-  const auth = getAuth();
 
-
-
-  initConnection = async () => {
+  const initConnection = async () => {
     if (typeof window.ethereum !== "undefined") {
       console.log("good");
       const accounts = await window.ethereum.request({
         method: "eth_requestAccounts",
       });
       const tempProvider = new ethers.providers.Web3Provider(window.ethereum);
-      this.state.provider=tempProvider;
+      setProvider(tempProvider);
       console.log(provider);
-      this.state.account=accounts[0];
-      await getUser(accounts[0]);
-      let newNonce=await getNonceToSign;
-      let signature=await ethereum.request({
-        method: 'personal_sign',
-        params: [
-          `0x${this.toHex(newNonce)}`,
-          account,
-        ],
-      })
-      let token=await verifySignedMessage(signature);
-      let authorization=await signInWithCustomToken(auth, token).then((userCredential) => {
-        const user = userCredential.user;
-      })
-
-
-
-
+      setAccount(accounts[0]);
+      console.log(accounts[0]);
+      let exist = await getUser(accounts[0]);
+      setExist(exist);
+      console.log("existe: "+exist)
+      if (exist) {
+        console.log("existe: "+exist)
+        let newNonce = await getNonceToSign(accounts[0]);
+        console.log("nonce: "+newNonce);
+        let signature = await window.ethereum.request({
+          method: "personal_sign",
+          params: [`0x${toHex(newNonce)}`, accounts[0]],
+        });
+        let token = await verifySignedMessage(accounts[0], signature);
+      }else{
+        
+      }
     } else {
       console.log("install metamask");
     }
   };
-    async function Register(nonce ){
-    console.log("HOla")
-    let exist= await searchUser();
-    console.log(exist.toString())
-    if (exist && user !=null) {
-      await setDoc(doc(db, "Users", account.toString().toUpperCase()), {
-        Name: user,
-        Nonce:nonce
+  async function Register() {
+    let exist = await searchUser();
+
+    if (exist && user != null) {
+      let newNonce = await getNonceToSign(account);
+      console.log(newNonce);
+      let signature = await window.ethereum.request({
+        method: "personal_sign",
+        params: [`0x${toHex(newNonce)}`, account],
       });
-      this.state.exist=true;
+      await setDoc(doc(db, "Users", account.toUpperCase()), {
+        Name: user,
+        Nonce: newNonce,
+      });
+      
+      let token = await verifySignedMessage(account, signature);
+      if (token) {
+        setLogged(true);
+      }
     }
   }
-   async function searchUser() {
+  async function searchUser() {
     const UsersData = collection(db, "Users");
-    console.log("HOla1")
+    console.log("HOla1");
     const q = query(UsersData, where("Name", "==", user));
-    console.log("HOla2")
+    console.log("HOla2");
     const querySnapshot = await getDocs(q);
-    console.log("HOla3")
+    console.log("HOla3");
     if (querySnapshot.empty) {
       console.log("Noexiste");
       return true;
@@ -113,60 +115,74 @@ export default function (props) {
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      this.state.exist=true;
+      setExist(true);
       console.log("Document data:", docSnap.data().Name);
-      this.state.user=docSnap.data().Name;
+      setUser(docSnap.data().Name);
+      return true;
     } else {
       // doc.data() will be undefined in this case
       console.log("No such document!");
+      return false;
     }
   }
-    async function getNonceToSign(){
-      // Get the user document for that address
-      const docRef = doc(db, "Users", account.toString().toUpperCase());
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        // The user document exists already, so just return the nonce
-        const existingNonce = docSnap.data()?.Nonce;
-        return existingNonce;
-      } else {
-        // The user document does not exist, create it first
-        const generatedNonce = Math.floor(Math.random() * 1000000).toString();
-        // Create an Auth user
-        await Register(existingNonce);
-        // Associate the nonce with that user
-        return generatedNonce ;
-      }
+  async function getNonceToSign(account) {
+    // Get the user document for that address
+    const docRef = doc(db, "Users", account.toUpperCase());
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      // The user document exists already, so just return the nonce
+      const existingNonce = docSnap.data()?.Nonce;
+      return existingNonce;
+    } else {
+      // The user document does not exist, create it first
+      console.log("no existe el nonce");
+      const generatedNonce = Math.floor(Math.random() * 1000000).toString();
+      // Create an Auth user
+      // Associate the nonce with that user
+      return generatedNonce;
+    }
   }
-   async function verifySignedMessage(signature){ 
-          const sig = signature;
-          // Get the nonce for this address
-          const docRef = doc(db, "Users", account.toString().toUpperCase());
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists) {
-            const existingNonce = docSnap.data()?.Nonce;
-            // Recover the address of the account used to create the given Ethereum signature.
-            const recoveredAddress = recoverPersonalSignature({
-              data: `0x${toHex(existingNonce)}`,
-              signature: sig,
-            });
-            // See if that matches the address the user is claiming the signature is from
-            if (recoveredAddress === address) {
-              // The signature was verified - update the nonce to prevent replay attacks
-              // update nonce
-              await userDocRef.update({
-                nonce: Math.floor(Math.random() * 1000000).toString(),
-              });
-              // Create a custom token for the specified address
-              const firebaseToken = await admin.auth().createCustomToken(address);
-              // Return the token
-              return response.status(200).json({ token: firebaseToken });
-            } else {
-              // The signature could not be verified
-              return response.sendStatus(401);
-            }
-          } 
-        } 
+  async function verifySignedMessage(account, signature) {
+    const sig = signature;
+    // Get the nonce for this address
+    const docRef = doc(db, "Users", account.toUpperCase());
+    const docSnap = await getDoc(docRef);
+    console.log(docSnap.value);
+    if (docSnap.exists) {
+      const existingNonce = docSnap.data()?.Nonce;
+      console.log(existingNonce);
+      // Recover the address of the account used to create the given Ethereum signature.
+      const recoveredAddress = recoverPersonalSignature({
+        data: `0x${toHex(existingNonce)}`,
+        signature: sig,
+      });
+      console.log(recoveredAddress)
+      // See if that matches the address the user is claiming the signature is from
+      if (recoveredAddress === account) {
+        // The signature was verified - update the nonce to prevent replay attacks
+        // update nonce
+        
+        await updateDoc(docRef,{
+          Nonce: Math.floor(Math.random() * 1000000).toString(),
+        });
+        // Return the token
+        setLogged(true);
+        return true;
+      } else {
+        // The signature could not be verified
+        return false;
+      }
+    }
+  }
+  function toHex(str) {
+    var result = '';
+    for (var i=0; i<str.length; i++) {
+      result += str.charCodeAt(i).toString(16);
+    }
+    return result;
+  }
+
+
   return (
     <Box
       display="flex"
@@ -179,7 +195,7 @@ export default function (props) {
         borderRadius: 10,
       }}
     >
-      {account == null ? (
+      {account==null ? (
         <Grid
           container
           alignItems="center"
@@ -201,7 +217,7 @@ export default function (props) {
         </Grid>
       ) : (
         <>
-          {Database.state.exist ? (
+          {logged ? (
             <Grid
               container
               alignItems="center"
@@ -210,7 +226,7 @@ export default function (props) {
             >
               <Grid item>
                 <Typography variant>
-                  ...{Database.state.account.substring(account.length - 7)}
+                  ...{account.substring(account.length - 7)}
                 </Typography>
               </Grid>
               <Grid item>
@@ -234,10 +250,10 @@ export default function (props) {
                 label="UserName"
                 variant="outlined"
                 onChange={(e) => {
-                  Database.state.user=e.target.value;
+                  setUser(e.target.value);
                 }}
               />
-              <Button onClick={Database.Register()}>
+              <Button onClick={Register}>
                 <Typography>Register</Typography>
               </Button>
             </Grid>

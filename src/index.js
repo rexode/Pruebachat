@@ -5,6 +5,8 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+window.Buffer = require('buffer/').Buffer;
+
 root.render(
   <React.StrictMode>
     <App />
