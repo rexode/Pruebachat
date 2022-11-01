@@ -92,6 +92,7 @@ export default function LogIn(props) {
       let token = await verifySignedMessage(account, signature);
       if (token) {
         setLogged(true);
+        console.log("algo va mal");
         navigateToHome();
       }
     }
@@ -169,6 +170,7 @@ export default function LogIn(props) {
           Nonce: Math.floor(Math.random() * 1000000).toString(),
         });
         // Return the token
+        navigateToHome();
         setLogged(true);
         return true;
       } else {

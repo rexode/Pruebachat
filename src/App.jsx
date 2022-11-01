@@ -9,6 +9,7 @@ import {
   Route,
   Redirect,
   useNavigate,
+  Routes
 } from "react-router-dom";
 import Home from "./Components/Home.jsx";
 
@@ -19,16 +20,17 @@ const navigate = useNavigate();
 
   const navigateToHome = () => {
     // 👇️ navigate to /contacts
+    console.log("algo va mal");
     navigate("/Home");
   };
 
   return (
-    <Router>
+    <>
       <Switch>
         <Route exact path="/" element={<LogIn navigateToHome={navigateToHome}/>}/>          
         <Route path="/Home" element={<Home/>}/>
       </Switch>
-    </Router>
+      </>
   );
 }
 
