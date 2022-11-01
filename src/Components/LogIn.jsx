@@ -23,12 +23,14 @@ import {
 } from "firebase/firestore";
 import { recoverPersonalSignature } from "@metamask/eth-sig-util";
 
-export default function (props) {
+
+export default function LogIn(props) {
   const [provider, setProvider] = useState(null);
   const [account, setAccount] = useState(null);
   const [exist, setExist] = useState(false);
   const [user, setUser] = useState(null);
   const [logged, setLogged] = useState(false);
+  const {navigateToHome}=props
 
   const firebaseConfig = {
     apiKey: "AIzaSyBtdpW3nwEsn3YtHsXPqHWRqbbXtIxopw4",
@@ -90,6 +92,7 @@ export default function (props) {
       let token = await verifySignedMessage(account, signature);
       if (token) {
         setLogged(true);
+        navigateToHome();
       }
     }
   }
@@ -184,40 +187,27 @@ export default function (props) {
 
 
   return (
-    <Box
-      display="flex"
+    <Grid
+      container
+      spacing={0}
+      direction="column"
       alignItems="center"
       justifyContent="center"
-      sx={{
-        width: 400,
-        height: 400,
-        background: "linear-gradient(to bottom, #48cae4, #caf0f8)",
-        borderRadius: 10,
-      }}
+      style={{ minHeight: "100vh", minWidth: "400" }}
     >
-      {account==null ? (
-        <Grid
-          container
+      <Grid item xs={10}>
+        <Box
+          display="flex"
           alignItems="center"
           justifyContent="center"
-          direction="column"
+          sx={{
+            width: 400,
+            height: 400,
+            background: "linear-gradient(to bottom, #48cae4, #caf0f8)",
+            borderRadius: 10,
+          }}
         >
-          <Grid item>
-            <Typography>Please Log-in with the account</Typography>
-          </Grid>
-          <Grid item>
-            <Button
-              disableElevation
-              sx={{ color: "black" }}
-              onClick={initConnection}
-            >
-              <Typography fontSize={16}>Log-in</Typography>
-            </Button>
-          </Grid>
-        </Grid>
-      ) : (
-        <>
-          {logged ? (
+          {account == null ? (
             <Grid
               container
               alignItems="center"
@@ -225,41 +215,65 @@ export default function (props) {
               direction="column"
             >
               <Grid item>
-                <Typography variant>
-                  ...{account.substring(account.length - 7)}
-                </Typography>
+                <Typography>Please Log-in with the account</Typography>
               </Grid>
               <Grid item>
-                <Typography variant="h3">{user}</Typography>
+                <Button
+                  disableElevation
+                  sx={{ color: "black" }}
+                  onClick={initConnection}
+                >
+                  <Typography fontSize={16}>Log-in</Typography>
+                </Button>
               </Grid>
             </Grid>
           ) : (
-            <Grid
-              container
-              alignItems="center"
-              justifyContent="center"
-              direction="column"
-            >
-              <Grid item>
-                <Typography variant="h5">
-                  Please Register with a Username
-                </Typography>
-              </Grid>
-              <TextField
-                id="outlined"
-                label="UserName"
-                variant="outlined"
-                onChange={(e) => {
-                  setUser(e.target.value);
-                }}
-              />
-              <Button onClick={Register}>
-                <Typography>Register</Typography>
-              </Button>
-            </Grid>
+            <>
+              {logged ? (
+                <Grid
+                  container
+                  alignItems="center"
+                  justifyContent="center"
+                  direction="column"
+                >
+                  <Grid item>
+                    <Typography variant>
+                      ...{account.substring(account.length - 7)}
+                    </Typography>
+                  </Grid>
+                  <Grid item>
+                    <Typography variant="h3">{user}</Typography>
+                  </Grid>
+                </Grid>
+              ) : (
+                <Grid
+                  container
+                  alignItems="center"
+                  justifyContent="center"
+                  direction="column"
+                >
+                  <Grid item>
+                    <Typography variant="h5">
+                      Please Register with a Username
+                    </Typography>
+                  </Grid>
+                  <TextField
+                    id="outlined"
+                    label="UserName"
+                    variant="outlined"
+                    onChange={(e) => {
+                      setUser(e.target.value);
+                    }}
+                  />
+                  <Button onClick={Register}>
+                    <Typography>Register</Typography>
+                  </Button>
+                </Grid>
+              )}
+            </>
           )}
-        </>
-      )}
-    </Box>
+        </Box>
+      </Grid>
+    </Grid>
   );
 }

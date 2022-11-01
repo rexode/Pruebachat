@@ -3,26 +3,32 @@ import React, { useRef} from "react";
 import { Typography, TextField, Button,Box,Grid } from "@mui/material";
 import LogIn from "./Components/LogIn";
 import { useEffect, useState } from "react";
-
+import {
+  BrowserRouter as Router,
+  Routes as Switch,
+  Route,
+  Redirect,
+  useNavigate,
+} from "react-router-dom";
+import Home from "./Components/Home.jsx";
 
 function App() {
 const [account, setAccount] = useState(null);
 const [provider, setProvider] = useState(null);
+const navigate = useNavigate();
 
-  
+  const navigateToHome = () => {
+    // 👇️ navigate to /contacts
+    navigate("/Home");
+  };
+
   return (
-    <Grid
-      container
-      spacing={0}
-      direction="column"
-      alignItems="center"
-      justifyContent="center"
-      style={{ minHeight: "100vh" ,minWidth:"400"}}
-    >
-      <Grid item xs={10}>
-        <LogIn  />
-      </Grid>
-    </Grid>
+    <Router>
+      <Switch>
+        <Route exact path="/" element={<LogIn navigateToHome={navigateToHome}/>}/>          
+        <Route path="/Home" element={<Home/>}/>
+      </Switch>
+    </Router>
   );
 }
 
