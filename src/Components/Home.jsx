@@ -1,10 +1,10 @@
 import { Typography } from "@mui/material";
 import React from "react";
-export default function Home(){
+import ListOfChats from "./ListOfChats"
+export default function Home(props){
+    const {account}=props;
 return(
-    <Typography>
-        Hola
-    </Typography>
 
+    <ListOfChats account={account}/>
 )
 }
